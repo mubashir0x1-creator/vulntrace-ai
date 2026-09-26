@@ -1,0 +1,763 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ finding["title"] }} · VulnTrace AI{% endblock %}
+
+{% block main %}
+
+<div class="dashboard-header">
+
+    <div>
+
+        <div class="auth-label">
+            SECURITY FINDING
+        </div>
+
+        <h1>
+            {{ finding["title"] }}
+        </h1>
+
+        <p class="text-secondary">
+            Report: {{ finding["report_name"] }}
+        </p>
+
+    </div>
+
+    <a
+        href="{{ url_for(
+            'view_report',
+            report_id=finding['report_id']
+        ) }}"
+        class="btn btn-outline-light"
+    >
+        ← Back to Report
+    </a>
+
+</div>
+
+
+<div class="row g-4 mt-3">
+
+
+    <!-- =====================================================
+         MAIN COLUMN
+         ===================================================== -->
+
+    <div class="col-lg-8">
+
+
+        <!-- Evidence -->
+
+        <div class="dashboard-panel">
+
+            <div class="auth-label">
+                EVIDENCE
+            </div>
+
+            <h2 class="mt-2">
+                Finding Analysis
+            </h2>
+
+
+            <div class="finding-section">
+
+                <h3>
+                    Description
+                </h3>
+
+                {% if finding["description"] %}
+
+                    <p>
+                        {{ finding["description"] }}
+                    </p>
+
+                {% else %}
+
+                    <p class="text-secondary">
+                        No description was supplied.
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+
+            <div class="finding-section">
+
+                <h3>
+                    Evidence
+                </h3>
+
+                {% if finding["evidence"] %}
+
+                    <pre class="evidence-box">{{ finding["evidence"] }}</pre>
+
+                {% else %}
+
+                    <div class="alert alert-warning">
+
+                        <strong>
+                            Insufficient evidence
+                        </strong>
+
+                        <br>
+
+                        No evidence was supplied with this finding.
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <div class="finding-section">
+
+                <h3>
+                    Asset
+                </h3>
+
+                <p>
+                    {{ finding["asset"] or "Not specified." }}
+                </p>
+
+            </div>
+
+
+            <div class="finding-section">
+
+                <h3>
+                    Status
+                </h3>
+
+                <p>
+                    {{ finding["status"]|upper }}
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             AI ANALYSIS
+             ===================================================== -->
+
+        <div class="dashboard-panel mt-4">
+
+            <div class="d-flex justify-content-between align-items-start">
+
+                <div>
+
+                    <div class="auth-label">
+                        AI LAYER
+                    </div>
+
+                    <h2 class="mt-2">
+                        🤖 AI Finding Analysis
+                    </h2>
+
+                    <p class="text-secondary mb-0">
+                        Local Qwen analysis grounded in the supplied
+                        finding evidence and deterministic risk data.
+                    </p>
+
+                </div>
+
+
+                {% if ai_analysis %}
+
+                    <span class="badge bg-success">
+                        AI ANALYSIS READY
+                    </span>
+
+                {% else %}
+
+                    <span class="badge bg-warning text-dark">
+                        UNAVAILABLE
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+            {% if ai_analysis %}
+
+                <div class="finding-section mt-4">
+
+                    <h3>
+                        Summary
+                    </h3>
+
+                    <p>
+                        {{ ai_analysis["summary"] }}
+                    </p>
+
+                </div>
+
+
+                <div class="finding-section">
+
+                    <h3>
+                        Impact
+                    </h3>
+
+                    <p>
+                        {{ ai_analysis["impact"] }}
+                    </p>
+
+                </div>
+
+
+                <div class="finding-section">
+
+                    <h3>
+                        Root Cause
+                    </h3>
+
+                    <p>
+                        {{ ai_analysis["root_cause"] }}
+                    </p>
+
+                </div>
+
+
+                <div class="finding-section">
+
+                    <h3>
+                        Remediation
+                    </h3>
+
+                    <p>
+                        {{ ai_analysis["remediation"] }}
+                    </p>
+
+                </div>
+
+
+                <div class="finding-section">
+
+                    <h3>
+                        Verification Guidance
+                    </h3>
+
+                    <p>
+                        {{ ai_analysis["verification"] }}
+                    </p>
+
+                </div>
+
+
+                <div class="finding-section">
+
+                    <h3>
+                        AI Confidence
+                    </h3>
+
+                    {% if ai_analysis["confidence"] == "High" %}
+
+                        <span class="badge bg-success">
+                            High
+                        </span>
+
+                    {% elif ai_analysis["confidence"] == "Medium" %}
+
+                        <span class="badge bg-warning text-dark">
+                            Medium
+                        </span>
+
+                    {% else %}
+
+                        <span class="badge bg-secondary">
+                            Low
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+
+            {% elif ai_error %}
+
+                <div class="alert alert-warning mt-4 mb-0">
+
+                    <strong>
+                        AI analysis unavailable.
+                    </strong>
+
+                    <br>
+
+                    {{ ai_error }}
+
+                </div>
+
+
+            {% else %}
+
+                <div class="alert alert-secondary mt-4 mb-0">
+
+                    AI analysis is not available for this finding.
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- =====================================================
+             VERIFICATION
+             ===================================================== -->
+
+        <div class="dashboard-panel mt-4">
+
+            <div class="auth-label">
+                VERIFICATION
+            </div>
+
+            <h2 class="mt-2">
+                Verify Remediation
+            </h2>
+
+            <p class="text-secondary">
+                After applying the remediation, provide new evidence
+                showing the current security state of the finding.
+            </p>
+
+
+            {% if finding["verification_status"] == "resolved" %}
+
+                <div class="alert alert-success">
+
+                    <strong>
+                        ✓ RESOLVED
+                    </strong>
+
+                    <br>
+
+                    This finding has been explicitly marked as resolved.
+
+                </div>
+
+
+            {% elif finding["verification_status"] == "needs_review" %}
+
+                <div class="alert alert-warning">
+
+                    <strong>
+                        ⚠ NEEDS REVIEW
+                    </strong>
+
+                    <br>
+
+                    Verification evidence has been submitted and
+                    requires explicit review.
+
+                </div>
+
+            {% else %}
+
+                <div class="alert alert-secondary">
+
+                    <strong>
+                        NOT STARTED
+                    </strong>
+
+                    <br>
+
+                    No verification evidence has been submitted yet.
+
+                </div>
+
+            {% endif %}
+
+
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'submit_verification',
+                    finding_id=finding['id']
+                ) }}"
+                class="mt-4"
+            >
+
+                <div class="mb-3">
+
+                    <label
+                        for="verification_evidence"
+                        class="form-label"
+                    >
+                        Verification Evidence
+                    </label>
+
+                    <textarea
+                        id="verification_evidence"
+                        name="verification_evidence"
+                        class="form-control"
+                        rows="6"
+                        placeholder="Describe the evidence collected after remediation..."
+                        required
+                    ></textarea>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+                    Submit Verification Evidence
+                </button>
+
+            </form>
+
+        </div>
+
+
+        <!-- =====================================================
+             VERIFICATION HISTORY
+             ===================================================== -->
+
+        {% if verification_history %}
+
+            <div class="dashboard-panel mt-4">
+
+                <div class="auth-label">
+                    AUDIT TRAIL
+                </div>
+
+                <h2 class="mt-2">
+                    Verification History
+                </h2>
+
+
+                {% for verification in verification_history %}
+
+                    <div class="finding-section">
+
+                        <div class="d-flex justify-content-between align-items-center">
+
+                            <h3 class="mb-0">
+                                Verification #{{ verification["id"] }}
+                            </h3>
+
+
+                            {% if verification["result"] == "RESOLVED" %}
+
+                                <span class="badge bg-success">
+                                    RESOLVED
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-warning text-dark">
+                                    NEEDS REVIEW
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <p class="text-secondary mt-2">
+                            Submitted:
+                            {{ verification["created_at"] }}
+                        </p>
+
+
+                        <h6>
+                            Evidence
+                        </h6>
+
+                        <pre class="evidence-box">{{ verification["evidence"] }}</pre>
+
+
+                        {% if verification["result"] != "RESOLVED" %}
+
+                            <form
+                                method="POST"
+                                action="{{ url_for(
+                                    'resolve_verification',
+                                    finding_id=finding['id'],
+                                    verification_id=verification['id']
+                                ) }}"
+                                class="mt-3"
+                            >
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-success"
+                                >
+                                    ✓ Mark Finding Resolved
+                                </button>
+
+                            </form>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+
+    </div>
+
+
+    <!-- =====================================================
+         RIGHT COLUMN
+         ===================================================== -->
+
+    <div class="col-lg-4">
+
+
+        <!-- Risk engine -->
+
+        <div class="dashboard-panel">
+
+            <div class="auth-label">
+                RISK ENGINE
+            </div>
+
+            <h2 class="mt-2">
+                Priority
+            </h2>
+
+
+            <div class="finding-section">
+
+                <span class="text-secondary">
+                    Risk Score
+                </span>
+
+                <div class="huge-risk-score">
+
+                    {{ "%.1f"|format(
+                        finding["risk_score"]
+                    ) }}
+
+                </div>
+
+                <span class="text-secondary">
+                    out of 100
+                </span>
+
+            </div>
+
+
+            <div class="finding-section">
+
+                <span class="text-secondary">
+                    Severity
+                </span>
+
+                <div class="mt-2">
+
+                    <span
+                        class="severity severity-{{ finding['severity'] }}"
+                    >
+                        {{ finding["severity"]|upper }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="finding-section">
+
+                <span class="text-secondary">
+                    Confidence
+                </span>
+
+                <h3 class="mt-2">
+
+                    {% if finding["confidence"] is not none %}
+
+                        {{ "%.0f"|format(
+                            finding["confidence"] * 100
+                        ) }}%
+
+                    {% else %}
+
+                        Unknown
+
+                    {% endif %}
+
+                </h3>
+
+            </div>
+
+
+            <div class="finding-section">
+
+                <span class="text-secondary">
+                    Evidence Quality
+                </span>
+
+                <h3 class="mt-2">
+
+                    {{ "%.0f"|format(
+                        finding["evidence_quality"] * 100
+                    ) }}%
+
+                </h3>
+
+            </div>
+
+        </div>
+
+
+        <!-- Duplicate analysis -->
+
+        <div class="dashboard-panel mt-4">
+
+            <div class="auth-label">
+                CORRELATION
+            </div>
+
+            <h2 class="mt-2">
+                Duplicate Analysis
+            </h2>
+
+
+            {% if finding["duplicate_of"] is none %}
+
+                <p class="text-secondary">
+
+                    This finding is the primary entry for its
+                    duplicate group.
+
+                </p>
+
+
+                <div class="duplicate-count">
+
+                    {{ finding["duplicate_count"] }}
+
+                </div>
+
+
+                <p class="text-secondary mb-0">
+
+                    finding(s) represented by this group
+
+                </p>
+
+            {% else %}
+
+                <div class="alert alert-warning">
+
+                    <strong>
+                        Duplicate candidate
+                    </strong>
+
+                    <br>
+
+                    This finding matches another finding based on
+                    the current title and asset comparison.
+
+                </div>
+
+                <p class="text-secondary">
+                    Primary finding ID:
+                    #{{ finding["duplicate_of"] }}
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- Local AI -->
+
+        <div class="dashboard-panel mt-4">
+
+            <div class="auth-label">
+                LOCAL AI
+            </div>
+
+            <h2 class="mt-2">
+                Qwen Analysis
+            </h2>
+
+
+            {% if ai_analysis %}
+
+                <p class="text-secondary">
+                    The finding was analyzed locally using the
+                    configured Qwen model through Ollama.
+                </p>
+
+                <span class="badge bg-success">
+                    CONNECTED
+                </span>
+
+            {% elif ai_error %}
+
+                <p class="text-secondary">
+                    The local AI analysis could not be completed.
+                </p>
+
+                <span class="badge bg-warning text-dark">
+                    ERROR
+                </span>
+
+            {% else %}
+
+                <p class="text-secondary">
+                    Local AI analysis is currently unavailable.
+                </p>
+
+                <span class="badge bg-secondary">
+                    WAITING
+                </span>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- Verification status -->
+
+        <div class="dashboard-panel mt-4">
+
+            <div class="auth-label">
+                VERIFICATION STATUS
+            </div>
+
+            <h2 class="mt-2">
+                Current State
+            </h2>
+
+
+            {% if finding["verification_status"] == "resolved" %}
+
+                <span class="badge bg-success">
+                    ✓ RESOLVED
+                </span>
+
+            {% elif finding["verification_status"] == "needs_review" %}
+
+                <span class="badge bg-warning text-dark">
+                    ⚠ NEEDS REVIEW
+                </span>
+
+            {% else %}
+
+                <span class="badge bg-secondary">
+                    NOT STARTED
+                </span>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

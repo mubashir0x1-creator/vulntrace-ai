@@ -1,0 +1,319 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ report["name"] }} · VulnTrace AI{% endblock %}
+
+{% block main %}
+
+<div class="dashboard-header">
+
+    <div>
+
+        <div class="auth-label">
+            SECURITY REPORT
+        </div>
+
+        <h1>
+            {{ report["name"] }}
+        </h1>
+
+        <p class="text-secondary">
+            {{ report["source_format"] }}
+            ·
+            Uploaded {{ report["uploaded_at"] }}
+        </p>
+
+    </div>
+
+
+    <div class="d-flex gap-2">
+
+        <a
+            href="{{ url_for('triage') }}"
+            class="btn btn-outline-light"
+        >
+            Triage
+        </a>
+
+        <a
+            href="{{ url_for('reports') }}"
+            class="btn btn-outline-light"
+        >
+            ← Reports
+        </a>
+
+    </div>
+
+</div>
+
+
+
+<div class="row g-4 mt-3">
+
+    <div class="col-md-4">
+
+        <div class="stat-card">
+
+            <span class="stat-label">
+                Raw Findings
+            </span>
+
+            <span class="stat-number">
+                {{ findings|length }}
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-md-4">
+
+        <div class="stat-card">
+
+            <span class="stat-label">
+                Unique Issues
+            </span>
+
+            <span class="stat-number">
+                {{ unique_count }}
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-md-4">
+
+        <div class="stat-card warning-stat">
+
+            <span class="stat-label">
+                Duplicate Candidates
+            </span>
+
+            <span class="stat-number">
+                {{ duplicate_count }}
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="dashboard-panel mt-4">
+
+    <div class="panel-heading">
+
+        <div class="auth-label">
+            RANKED FINDINGS
+        </div>
+
+        <h2>
+            Security Issues
+        </h2>
+
+        <p class="text-secondary">
+            Findings are ranked by risk score. Duplicate candidates
+            remain visible for auditability.
+        </p>
+
+    </div>
+
+
+
+    {% if findings %}
+
+        <div class="row g-4 mt-2">
+
+            {% for finding in findings %}
+
+                <div class="col-12">
+
+                    <div
+                        class="workspace-card
+                        {% if finding['duplicate_of'] is not none %}
+                            duplicate-card
+                        {% endif %}"
+                    >
+
+
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+
+                            <div>
+
+                                {% if finding["duplicate_of"] is none %}
+
+                                    <div class="workspace-number mb-2">
+                                        UNIQUE ISSUE
+                                    </div>
+
+                                {% else %}
+
+                                    <div class="workspace-number mb-2">
+                                        DUPLICATE CANDIDATE
+                                    </div>
+
+                                {% endif %}
+
+
+                                <h3>
+                                    {{ finding["title"] }}
+                                </h3>
+
+                            </div>
+
+
+                            <div class="text-end">
+
+                                <span
+                                    class="severity severity-{{ finding['severity'] }}"
+                                >
+                                    {{ finding["severity"]|upper }}
+                                </span>
+
+                                <div class="risk-score mt-2">
+
+                                    {{ "%.1f"|format(
+                                        finding["risk_score"]
+                                    ) }}
+
+                                    / 100
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+
+                        {% if finding["asset"] %}
+
+                            <p class="mt-3 mb-2">
+
+                                <strong>
+                                    Asset:
+                                </strong>
+
+                                {{ finding["asset"] }}
+
+                            </p>
+
+                        {% endif %}
+
+
+
+                        {% if finding["description"] %}
+
+                            <p>
+                                {{ finding["description"] }}
+                            </p>
+
+                        {% else %}
+
+                            <p class="text-secondary">
+                                No description was supplied.
+                            </p>
+
+                        {% endif %}
+
+
+
+                        <div class="d-flex flex-wrap gap-3 text-secondary mt-3">
+
+                            {% if finding["confidence"] is not none %}
+
+                                <span>
+
+                                    Confidence:
+
+                                    <strong class="text-light">
+
+                                        {{ "%.0f"|format(
+                                            finding["confidence"] * 100
+                                        ) }}%
+
+                                    </strong>
+
+                                </span>
+
+                            {% endif %}
+
+
+
+                            <span>
+
+                                Evidence:
+
+                                <strong class="text-light">
+
+                                    {{ "%.0f"|format(
+                                        finding["evidence_quality"] * 100
+                                    ) }}%
+
+                                </strong>
+
+                            </span>
+
+
+
+                            <span>
+
+                                Group:
+
+                                <strong class="text-light">
+                                    {{ finding["duplicate_count"] }}
+                                </strong>
+
+                            </span>
+
+                        </div>
+
+
+
+                        <div class="mt-4">
+
+                            <a
+                                href="{{ url_for(
+                                    'view_finding',
+                                    finding_id=finding['id']
+                                ) }}"
+                                class="btn btn-primary btn-sm"
+                            >
+                                View Finding →
+                            </a>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+
+    {% else %}
+
+        <div class="text-center py-5">
+
+            <h3>
+                No findings
+            </h3>
+
+            <p class="text-secondary">
+                This report contains no findings.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

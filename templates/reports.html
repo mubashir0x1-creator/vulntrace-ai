@@ -1,0 +1,175 @@
+{% extends "layout.html" %}
+
+{% block title %}Reports · VulnTrace AI{% endblock %}
+
+{% block main %}
+
+<div class="dashboard-header">
+
+    <div>
+
+        <div class="auth-label">
+            SECURITY REPORTS
+        </div>
+
+        <h1>
+            Reports
+        </h1>
+
+        <p class="text-secondary">
+            Review imported security assessment data.
+        </p>
+
+    </div>
+
+
+    <div class="d-flex gap-2">
+
+        <a
+            href="{{ url_for('upload_report') }}"
+            class="btn btn-primary"
+        >
+            + Import Report
+        </a>
+
+
+        <form
+            method="post"
+            action="{{ url_for('load_demo_report') }}"
+        >
+
+            <button
+                type="submit"
+                class="btn btn-outline-light"
+            >
+                Load Demo Report
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<div class="dashboard-panel mt-4">
+
+    {% if reports %}
+
+        <div class="table-responsive">
+
+            <table class="table table-dark table-hover align-middle mb-0">
+
+                <thead>
+
+                    <tr>
+                        <th>Report</th>
+                        <th>Format</th>
+                        <th>Findings</th>
+                        <th>Uploaded</th>
+                        <th></th>
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for report in reports %}
+
+                        <tr>
+
+                            <td>
+
+                                <strong>
+                                    {{ report["name"] }}
+                                </strong>
+
+                            </td>
+
+
+                            <td>
+                                {{ report["source_format"] }}
+                            </td>
+
+
+                            <td>
+                                {{ report["finding_count"] }}
+                            </td>
+
+
+                            <td>
+                                {{ report["uploaded_at"] }}
+                            </td>
+
+
+                            <td class="text-end">
+
+                                <a
+                                    href="{{ url_for(
+                                        'view_report',
+                                        report_id=report['id']
+                                    ) }}"
+                                    class="btn btn-outline-light btn-sm"
+                                >
+                                    View
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    {% else %}
+
+        <div class="text-center py-5">
+
+            <h2>
+                No reports yet
+            </h2>
+
+            <p class="text-secondary">
+                Import a report or load the built-in demonstration.
+            </p>
+
+
+            <div class="d-flex justify-content-center gap-2">
+
+                <a
+                    href="{{ url_for('upload_report') }}"
+                    class="btn btn-primary"
+                >
+                    Import Report
+                </a>
+
+
+                <form
+                    method="post"
+                    action="{{ url_for('load_demo_report') }}"
+                >
+
+                    <button
+                        type="submit"
+                        class="btn btn-outline-light"
+                    >
+                        Load Demo Report
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+
+{% block title %}VulnTrace AI · Security Analysis{% endblock %}
+
+{% block main %}
+
+<section class="hero">
+
+    <div class="hero-badge">
+        DEFENSIVE SECURITY ANALYSIS
+    </div>
+
+    <h1>
+        Turn security findings into
+        <span>actionable decisions.</span>
+    </h1>
+
+    <p>
+        VulnTrace AI helps organize, prioritize, explain, and remediate
+        security findings while keeping every conclusion tied to evidence.
+    </p>
+
+    <div class="hero-actions">
+
+        <a
+            href="{{ url_for('register') }}"
+            class="btn btn-primary btn-lg"
+        >
+            Start analyzing
+        </a>
+
+        <a
+            href="{{ url_for('login') }}"
+            class="btn btn-outline-light btn-lg"
+        >
+            Sign in
+        </a>
+
+    </div>
+
+</section>
+
+
+<section class="row g-4 mt-5">
+
+    <div class="col-md-4">
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+                01
+            </div>
+
+            <h2>Evidence-first</h2>
+
+            <p>
+                Security conclusions are connected to the evidence contained
+                in the assessment data.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-md-4">
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+                02
+            </div>
+
+            <h2>Prioritize</h2>
+
+            <p>
+                Sort findings by severity, confidence, impact, and other
+                useful risk signals.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-md-4">
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+                03
+            </div>
+
+            <h2>Remediate</h2>
+
+            <p>
+                Turn technical findings into understandable fixes and
+                verification steps.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

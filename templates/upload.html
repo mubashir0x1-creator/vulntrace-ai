@@ -1,0 +1,108 @@
+{% extends "layout.html" %}
+
+{% block title %}Import Report · VulnTrace AI{% endblock %}
+
+{% block main %}
+
+<div class="dashboard-header">
+
+    <div>
+
+        <div class="auth-label">
+            REPORT INGESTION
+        </div>
+
+        <h1>
+            Import a security report
+        </h1>
+
+        <p class="text-secondary">
+            Upload an authorized JSON assessment report.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="auth-card">
+
+
+    <form
+        method="post"
+        enctype="multipart/form-data"
+    >
+
+        <div class="mb-4">
+
+            <label
+                for="report"
+                class="form-label"
+            >
+                JSON report
+            </label>
+
+
+            <input
+                id="report"
+                name="report"
+                type="file"
+                class="form-control"
+                accept=".json,application/json"
+                required
+            >
+
+
+            <div class="form-text">
+                Maximum file size: 1 MB.
+            </div>
+
+        </div>
+
+
+        <button
+            type="submit"
+            class="btn btn-primary w-100"
+        >
+            Import Report
+        </button>
+
+    </form>
+
+
+    <div class="divider">
+        OR
+    </div>
+
+
+    <form
+        method="post"
+        action="{{ url_for('load_demo_report') }}"
+    >
+
+        <button
+            type="submit"
+            class="btn btn-outline-light w-100"
+        >
+            Load Built-in Demo Report
+        </button>
+
+    </form>
+
+
+    <p class="text-secondary small mt-3 mb-0">
+        The demo report is stored inside the VulnTrace project and does
+        not require a file from your computer.
+    </p>
+
+
+    <a
+        href="{{ url_for('reports') }}"
+        class="btn btn-link mt-3"
+    >
+        ← Back to reports
+    </a>
+
+</div>
+
+{% endblock %}

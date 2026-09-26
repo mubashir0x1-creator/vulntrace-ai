@@ -1,0 +1,595 @@
+{% extends "layout.html" %}
+
+{% block title %}Triage · VulnTrace AI{% endblock %}
+
+{% block main %}
+
+<!-- =====================================================
+     HEADER
+     ===================================================== -->
+
+<div class="dashboard-header">
+
+    <div>
+
+        <div class="auth-label">
+            SECURITY TRIAGE
+        </div>
+
+        <h1>
+            Priority Queue
+        </h1>
+
+        <p class="text-secondary">
+            Unique findings ranked by deterministic risk score,
+            with remediation verification status.
+        </p>
+
+    </div>
+
+
+    <div class="d-flex gap-2">
+
+        <a
+            href="{{ url_for('reports') }}"
+            class="btn btn-outline-light"
+        >
+            Reports
+        </a>
+
+        <a
+            href="{{ url_for('upload_report') }}"
+            class="btn btn-primary"
+        >
+            + Import Report
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     TRIAGE SUMMARY
+     ===================================================== -->
+
+<div class="row g-4 mt-3">
+
+
+    <!-- Total -->
+
+    <div class="col-md-6 col-xl-3">
+
+        <div class="dashboard-panel stat-card h-100">
+
+            <div class="auth-label">
+                UNIQUE FINDINGS
+            </div>
+
+            <div class="stat-number">
+                {{ findings|length }}
+            </div>
+
+            <p class="text-secondary mb-0">
+                Findings in the priority queue.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- Needs Review -->
+
+    <div class="col-md-6 col-xl-3">
+
+        <div class="dashboard-panel stat-card h-100">
+
+            <div class="auth-label">
+                NEEDS REVIEW
+            </div>
+
+            <div class="stat-number">
+
+                {{
+                    findings
+                    |selectattr(
+                        "verification_status",
+                        "equalto",
+                        "needs_review"
+                    )
+                    |list
+                    |length
+                }}
+
+            </div>
+
+            <p class="text-secondary mb-0">
+                Verification evidence awaiting review.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- Resolved -->
+
+    <div class="col-md-6 col-xl-3">
+
+        <div class="dashboard-panel stat-card h-100">
+
+            <div class="auth-label">
+                RESOLVED
+            </div>
+
+            <div class="stat-number">
+
+                {{
+                    findings
+                    |selectattr(
+                        "verification_status",
+                        "equalto",
+                        "resolved"
+                    )
+                    |list
+                    |length
+                }}
+
+            </div>
+
+            <p class="text-secondary mb-0">
+                Explicitly resolved findings.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- Open -->
+
+    <div class="col-md-6 col-xl-3">
+
+        <div class="dashboard-panel stat-card h-100">
+
+            <div class="auth-label">
+                NOT STARTED
+            </div>
+
+            <div class="stat-number">
+
+                {{
+                    findings
+                    |rejectattr(
+                        "verification_status",
+                        "equalto",
+                        "resolved"
+                    )
+                    |rejectattr(
+                        "verification_status",
+                        "equalto",
+                        "needs_review"
+                    )
+                    |list
+                    |length
+                }}
+
+            </div>
+
+            <p class="text-secondary mb-0">
+                Findings awaiting remediation verification.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     PRIORITY QUEUE
+     ===================================================== -->
+
+<div class="dashboard-panel mt-4">
+
+
+    <div class="d-flex justify-content-between align-items-center">
+
+        <div>
+
+            <div class="auth-label">
+                RISK-BASED QUEUE
+            </div>
+
+            <h2 class="mt-2 mb-0">
+                Findings
+            </h2>
+
+        </div>
+
+
+        <span class="badge bg-info text-dark">
+            DETERMINISTIC RISK
+        </span>
+
+    </div>
+
+
+    {% if findings %}
+
+
+        <div class="table-responsive mt-4">
+
+            <table class="table table-dark table-hover align-middle">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            #
+                        </th>
+
+                        <th>
+                            Finding
+                        </th>
+
+                        <th>
+                            Severity
+                        </th>
+
+                        <th>
+                            Risk Score
+                        </th>
+
+                        <th>
+                            Confidence
+                        </th>
+
+                        <th>
+                            Evidence
+                        </th>
+
+                        <th>
+                            Group
+                        </th>
+
+                        <th>
+                            Verification
+                        </th>
+
+                        <th>
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for finding in findings %}
+
+                        <tr
+                            {% if finding["verification_status"] == "resolved" %}
+                                class="opacity-75"
+                            {% endif %}
+                        >
+
+
+                            <!-- Number -->
+
+                            <td>
+
+                                <span class="text-secondary">
+                                    {{ loop.index }}
+                                </span>
+
+                            </td>
+
+
+                            <!-- Finding -->
+
+                            <td>
+
+                                <a
+                                    href="{{ url_for(
+                                        'view_finding',
+                                        finding_id=finding['id']
+                                    ) }}"
+                                    class="finding-link"
+                                >
+
+                                    <strong>
+                                        {{ finding["title"] }}
+                                    </strong>
+
+                                </a>
+
+
+                                <div class="small text-secondary">
+                                    {{ finding["report_name"] }}
+                                </div>
+
+
+                                {% if finding["asset"] %}
+
+                                    <div class="small text-secondary">
+                                        {{ finding["asset"] }}
+                                    </div>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- Severity -->
+
+                            <td>
+
+                                <span
+                                    class="severity severity-{{ finding['severity'] }}"
+                                >
+                                    {{ finding["severity"]|upper }}
+                                </span>
+
+                            </td>
+
+
+                            <!-- Risk -->
+
+                            <td>
+
+                                <span class="risk-score">
+
+                                    {{ "%.1f"|format(
+                                        finding["risk_score"]
+                                    ) }}
+
+                                </span>
+
+                                <div class="small text-secondary">
+                                    / 100
+                                </div>
+
+                            </td>
+
+
+                            <!-- Confidence -->
+
+                            <td>
+
+                                {% if finding["confidence"] is not none %}
+
+                                    {{ "%.0f"|format(
+                                        finding["confidence"] * 100
+                                    ) }}%
+
+                                {% else %}
+
+                                    <span class="text-secondary">
+                                        N/A
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- Evidence -->
+
+                            <td>
+
+                                <span class="risk-score">
+
+                                    {{ "%.0f"|format(
+                                        finding["evidence_quality"] * 100
+                                    ) }}%
+
+                                </span>
+
+                                <div class="small text-secondary">
+                                    quality
+                                </div>
+
+                            </td>
+
+
+                            <!-- Duplicate Group -->
+
+                            <td>
+
+                                <span class="badge bg-secondary">
+
+                                    {{ finding["duplicate_count"] }}
+
+                                </span>
+
+                                <div class="small text-secondary">
+                                    instance(s)
+                                </div>
+
+                            </td>
+
+
+                            <!-- Verification -->
+
+                            <td>
+
+                                {% if finding["verification_status"] == "resolved" %}
+
+                                    <span class="badge bg-success">
+                                        ✓ RESOLVED
+                                    </span>
+
+                                {% elif finding["verification_status"] == "needs_review" %}
+
+                                    <span class="badge bg-warning text-dark">
+                                        ⚠ NEEDS REVIEW
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-secondary">
+                                        NOT STARTED
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- Action -->
+
+                            <td>
+
+                                <a
+                                    href="{{ url_for(
+                                        'view_finding',
+                                        finding_id=finding['id']
+                                    ) }}"
+                                    class="btn btn-outline-light btn-sm"
+                                >
+                                    View
+                                </a>
+
+                            </td>
+
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+    {% else %}
+
+
+        <!-- Empty State -->
+
+        <div class="text-center py-5">
+
+            <div class="auth-label">
+                NO ACTIVE FINDINGS
+            </div>
+
+            <h2 class="mt-2">
+                Triage queue is empty
+            </h2>
+
+            <p class="text-secondary">
+                Import a security assessment to generate
+                risk-based priorities.
+            </p>
+
+            <a
+                href="{{ url_for('upload_report') }}"
+                class="btn btn-primary"
+            >
+                Import Report
+            </a>
+
+        </div>
+
+
+    {% endif %}
+
+
+</div>
+
+
+<!-- =====================================================
+     TRIAGE EXPLANATION
+     ===================================================== -->
+
+<div class="dashboard-panel mt-4">
+
+    <div class="auth-label">
+        TRIAGE MODEL
+    </div>
+
+    <h2 class="mt-2">
+        Evidence-First Prioritization
+    </h2>
+
+
+    <div class="row g-4 mt-2">
+
+
+        <div class="col-md-4">
+
+            <div class="workflow-step">
+
+                <span>
+                    01
+                </span>
+
+                <strong>
+                    Risk
+                </strong>
+
+                <small>
+                    Deterministic risk scoring establishes priority.
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="workflow-step">
+
+                <span>
+                    02
+                </span>
+
+                <strong>
+                    Evidence
+                </strong>
+
+                <small>
+                    Evidence quality helps indicate how well-supported
+                    a finding is.
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="workflow-step">
+
+                <span>
+                    03
+                </span>
+
+                <strong>
+                    Verification
+                </strong>
+
+                <small>
+                    Remediation requires new evidence and explicit
+                    confirmation before resolution.
+                </small>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+{% endblock %}

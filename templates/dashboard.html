@@ -1,0 +1,647 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard · VulnTrace AI{% endblock %}
+
+{% block main %}
+
+<!-- =====================================================
+     DASHBOARD HEADER
+     ===================================================== -->
+
+<div class="dashboard-header">
+
+    <div>
+
+        <div class="auth-label">
+            SECURITY OPERATIONS
+        </div>
+
+        <h1>
+            VulnTrace AI
+        </h1>
+
+        <p class="text-secondary">
+            Welcome back, {{ username }}.
+            Monitor findings, prioritize risk, and track remediation.
+        </p>
+
+    </div>
+
+    <div class="d-flex gap-2">
+
+        <a
+            href="{{ url_for('reports') }}"
+            class="btn btn-outline-light"
+        >
+            View Reports
+        </a>
+
+        <a
+            href="{{ url_for('triage') }}"
+            class="btn btn-primary"
+        >
+            Open Triage
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     OVERVIEW CARDS
+     ===================================================== -->
+
+<div class="row g-4 mt-3">
+
+    <!-- Reports -->
+
+    <div class="col-md-6 col-xl-3">
+
+        <div class="dashboard-panel stat-card h-100">
+
+            <div class="auth-label">
+                REPORTS
+            </div>
+
+            <div class="stat-number">
+                {{ report_count }}
+            </div>
+
+            <p class="text-secondary mb-0">
+                Imported security reports
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- Findings -->
+
+    <div class="col-md-6 col-xl-3">
+
+        <div class="dashboard-panel stat-card h-100">
+
+            <div class="auth-label">
+                FINDINGS
+            </div>
+
+            <div class="stat-number">
+                {{ finding_count }}
+            </div>
+
+            <p class="text-secondary mb-0">
+                Raw findings detected
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- Unique -->
+
+    <div class="col-md-6 col-xl-3">
+
+        <div class="dashboard-panel stat-card h-100">
+
+            <div class="auth-label">
+                UNIQUE ISSUES
+            </div>
+
+            <div class="stat-number">
+                {{ unique_finding_count }}
+            </div>
+
+            <p class="text-secondary mb-0">
+                Duplicate groups collapsed
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- Critical -->
+
+    <div class="col-md-6 col-xl-3">
+
+        <div class="dashboard-panel stat-card h-100">
+
+            <div class="auth-label">
+                CRITICAL
+            </div>
+
+            <div class="stat-number">
+                {{ critical_count }}
+            </div>
+
+            <p class="text-secondary mb-0">
+                Critical severity findings
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     SEVERITY OVERVIEW
+     ===================================================== -->
+
+<div class="row g-4 mt-1">
+
+    <div class="col-md-6">
+
+        <div class="dashboard-panel h-100">
+
+            <div class="auth-label">
+                SEVERITY
+            </div>
+
+            <h2 class="mt-2">
+                High Priority
+            </h2>
+
+            <div class="stat-number">
+                {{ high_count }}
+            </div>
+
+            <p class="text-secondary mb-0">
+                High severity findings requiring attention.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-md-6">
+
+        <div class="dashboard-panel h-100">
+
+            <div class="auth-label">
+                SECURITY PIPELINE
+            </div>
+
+            <h2 class="mt-2">
+                Evidence → Action
+            </h2>
+
+            <p class="text-secondary mb-0">
+                Findings can move from detection and AI-assisted
+                remediation guidance through evidence-based verification.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     VERIFICATION LIFECYCLE
+     ===================================================== -->
+
+<div class="dashboard-panel mt-4">
+
+    <div class="d-flex justify-content-between align-items-start">
+
+        <div>
+
+            <div class="auth-label">
+                REMEDIATION LIFECYCLE
+            </div>
+
+            <h2 class="mt-2">
+                Verification Status
+            </h2>
+
+            <p class="text-secondary mb-0">
+                Track what has been verified after remediation.
+            </p>
+
+        </div>
+
+
+        <span class="badge bg-info text-dark">
+            EVIDENCE-FIRST
+        </span>
+
+    </div>
+
+
+    <div class="row g-4 mt-2">
+
+
+        <!-- Not Started -->
+
+        <div class="col-md-4">
+
+            <div class="verification-card">
+
+                <div class="verification-icon">
+                    ○
+                </div>
+
+                <div>
+
+                    <div class="auth-label">
+                        NOT STARTED
+                    </div>
+
+                    <div class="verification-number">
+                        {{ not_started_count }}
+                    </div>
+
+                    <p class="text-secondary mb-0">
+                        Findings awaiting verification evidence.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Needs Review -->
+
+        <div class="col-md-4">
+
+            <div class="verification-card">
+
+                <div class="verification-icon">
+                    !
+                </div>
+
+                <div>
+
+                    <div class="auth-label">
+                        NEEDS REVIEW
+                    </div>
+
+                    <div class="verification-number">
+                        {{ needs_review_count }}
+                    </div>
+
+                    <p class="text-secondary mb-0">
+                        Evidence submitted and awaiting confirmation.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Resolved -->
+
+        <div class="col-md-4">
+
+            <div class="verification-card">
+
+                <div class="verification-icon">
+                    ✓
+                </div>
+
+                <div>
+
+                    <div class="auth-label">
+                        RESOLVED
+                    </div>
+
+                    <div class="verification-number">
+                        {{ resolved_count }}
+                    </div>
+
+                    <p class="text-secondary mb-0">
+                        Findings explicitly marked resolved.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     TOP PRIORITY FINDINGS
+     ===================================================== -->
+
+<div class="dashboard-panel mt-4">
+
+    <div class="d-flex justify-content-between align-items-center">
+
+        <div>
+
+            <div class="auth-label">
+                PRIORITY QUEUE
+            </div>
+
+            <h2 class="mt-2 mb-0">
+                Top Findings
+            </h2>
+
+        </div>
+
+
+        <a
+            href="{{ url_for('triage') }}"
+            class="btn btn-outline-light btn-sm"
+        >
+            Full Triage
+        </a>
+
+    </div>
+
+
+    {% if top_findings %}
+
+        <div class="table-responsive mt-4">
+
+            <table class="table table-dark table-hover align-middle">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Finding
+                        </th>
+
+                        <th>
+                            Severity
+                        </th>
+
+                        <th>
+                            Risk
+                        </th>
+
+                        <th>
+                            Asset
+                        </th>
+
+                        <th>
+                            Verification
+                        </th>
+
+                        <th>
+                            Action
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for finding in top_findings %}
+
+                        <tr>
+
+                            <td>
+
+                                <a
+                                    href="{{ url_for(
+                                        'view_finding',
+                                        finding_id=finding['id']
+                                    ) }}"
+                                    class="finding-link"
+                                >
+                                    {{ finding["title"] }}
+                                </a>
+
+
+                                {% if finding["duplicate_count"] and finding["duplicate_count"] > 1 %}
+
+                                    <div class="small text-secondary">
+
+                                        {{ finding["duplicate_count"] }}
+                                        related instances
+
+                                    </div>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                <span
+                                    class="severity severity-{{ finding['severity'] }}"
+                                >
+                                    {{ finding["severity"]|upper }}
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                <strong>
+                                    {{ "%.1f"|format(
+                                        finding["risk_score"]
+                                    ) }}
+                                </strong>
+
+                                <span class="text-secondary">
+                                    /100
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                <span class="text-secondary">
+
+                                    {{ finding["asset"] or "Not specified" }}
+
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                {% if finding["verification_status"] == "resolved" %}
+
+                                    <span class="badge bg-success">
+                                        ✓ RESOLVED
+                                    </span>
+
+                                {% elif finding["verification_status"] == "needs_review" %}
+
+                                    <span class="badge bg-warning text-dark">
+                                        ⚠ NEEDS REVIEW
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-secondary">
+                                        NOT STARTED
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                <a
+                                    href="{{ url_for(
+                                        'view_finding',
+                                        finding_id=finding['id']
+                                    ) }}"
+                                    class="btn btn-sm btn-outline-light"
+                                >
+                                    Open
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+    {% else %}
+
+        <div class="alert alert-secondary mt-4 mb-0">
+
+            No findings are available yet.
+
+            Import a security report to begin analysis.
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- =====================================================
+     WORKFLOW
+     ===================================================== -->
+
+<div class="dashboard-panel mt-4">
+
+    <div class="auth-label">
+        VULNTRACE WORKFLOW
+    </div>
+
+    <h2 class="mt-2">
+        Detection to Resolution
+    </h2>
+
+
+    <div class="row g-3 mt-2">
+
+        <div class="col-md-6 col-xl-3">
+
+            <div class="workflow-step">
+
+                <span>
+                    01
+                </span>
+
+                <strong>
+                    Detect
+                </strong>
+
+                <small>
+                    Import security findings.
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-6 col-xl-3">
+
+            <div class="workflow-step">
+
+                <span>
+                    02
+                </span>
+
+                <strong>
+                    Prioritize
+                </strong>
+
+                <small>
+                    Evidence and deterministic risk scoring.
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-6 col-xl-3">
+
+            <div class="workflow-step">
+
+                <span>
+                    03
+                </span>
+
+                <strong>
+                    Remediate
+                </strong>
+
+                <small>
+                    Local AI provides remediation guidance.
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-6 col-xl-3">
+
+            <div class="workflow-step">
+
+                <span>
+                    04
+                </span>
+
+                <strong>
+                    Verify
+                </strong>
+
+                <small>
+                    Submit evidence and explicitly resolve.
+                </small>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

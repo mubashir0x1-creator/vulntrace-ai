@@ -1,0 +1,44 @@
+{
+    "findings": [
+        {
+            "title": "Exposed debug configuration",
+            "severity": "high",
+            "confidence": 0.88,
+            "description": "A development-oriented configuration appears to be exposed.",
+            "evidence": "The assessment identified a debug configuration exposed by the application response. This could reveal implementation details and diagnostic information to an unauthorized user.",
+            "asset": "https://example.local/app"
+        },
+        {
+            "title": "Exposed debug configuration",
+            "severity": "high",
+            "confidence": 0.91,
+            "description": "The same development-oriented configuration was observed again during the assessment.",
+            "evidence": "A second scanner result reported the same debug configuration on the application.",
+            "asset": "https://example.local/app"
+        },
+        {
+            "title": "Missing security header",
+            "severity": "medium",
+            "confidence": 0.94,
+            "description": "A recommended HTTP security header is missing from the response.",
+            "evidence": "The application response did not include the expected security header.",
+            "asset": "https://example.local/"
+        },
+        {
+            "title": "Informational version disclosure",
+            "severity": "informational",
+            "confidence": 0.79,
+            "description": "The application reveals version information in a response.",
+            "evidence": "Server response contained software version information that may help identify the deployed software.",
+            "asset": "https://example.local/"
+        },
+        {
+            "title": "Weak session configuration",
+            "severity": "critical",
+            "confidence": 0.72,
+            "description": "The assessment indicates a potentially unsafe session configuration requiring urgent review.",
+            "evidence": "The assessment recorded a session-related configuration weakness with evidence associated with the authentication component.",
+            "asset": "https://example.local/login"
+        }
+    ]
+}
