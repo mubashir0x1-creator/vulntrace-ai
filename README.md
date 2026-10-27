@@ -4,7 +4,7 @@ Evidence-first security finding triage, AI-assisted analysis, remediation verifi
 
 ## Overview
 
-VulnTrace AI is a Flask + SQLite cybersecurity application designed to transform structured security reports into actionable security findings.
+VulnTrace AI is a Flask cybersecurity application designed to transform structured security reports into actionable security findings. It supports Neon PostgreSQL and retains SQLite as a local fallback.
 
 The system combines deterministic security analysis with a local AI analysis layer powered by Ollama and Qwen 2.5 1.5B.
 
@@ -24,7 +24,7 @@ Evidence Quality + Risk Score
 ↓
 Duplicate Detection
 ↓
-SQLite Storage
+Neon PostgreSQL Storage
 ↓
 Dashboard / Reports / Triage
 ↓
@@ -54,7 +54,8 @@ Human Resolution
 - Verification evidence submission
 - Needs Review workflow
 - Human-controlled resolution
-- SQLite database storage
+- Neon PostgreSQL storage when `NEON_DATABASE_URL` is configured
+- SQLite fallback for local use without that secret
 - User registration and authentication
 
 ## Deterministic Security Analysis
@@ -105,7 +106,7 @@ The AI layer is designed to avoid:
 
 ## AI Caching
 
-Finding-level AI analysis is cached in the SQLite database.
+Finding-level AI analysis is cached in the configured database.
 
 Cached analyses use:
 
@@ -140,13 +141,14 @@ AI does not automatically resolve findings.
 
 A user must submit verification evidence and explicitly resolve the finding after review.
 
-Verification information is stored in SQLite to maintain an auditable history.
+Verification information is stored in the configured database to maintain an auditable history.
 
 ## Technology Stack
 
 - Python
 - Flask
-- SQLite
+- PostgreSQL (Neon)
+- SQLite fallback
 - HTML
 - CSS
 - Jinja Templates
@@ -158,6 +160,8 @@ Verification information is stored in SQLite to maintain an auditable history.
 
     .
     ├── app.py
+    ├── db.py
+    ├── migrate_to_postgres.py
     ├── helpers.py
     ├── requirements.txt
     ├── pre_cache_ai.py
@@ -165,7 +169,7 @@ Verification information is stored in SQLite to maintain an auditable history.
     │
     ├── database/
     │   ├── schema.sql
-    │   └── vulntrace.db
+    │   └── schema.postgres.sql
     │
     ├── sample_reports/
     │   └── demo_report.json
@@ -211,6 +215,30 @@ Set the Flask secret key as an environment variable:
     export VULNTRACE_SECRET_KEY="your-local-secret"
 
 Do not commit the secret key to the repository.
+On Replit, the existing `SESSION_SECRET` is also accepted as a fallback.
+
+Set `NEON_DATABASE_URL` in Replit Secrets to use Neon PostgreSQL. The value is
+read by the app from the environment and must not be placed in source code or
+printed in logs. If the secret is absent, the app retains its SQLite fallback.
+
+## Moving Existing SQLite Data to Neon
+
+The original `database/schema.sql` remains the SQLite schema. Neon uses
+`database/schema.postgres.sql`. Before any data is copied, run the read-only
+target check:
+
+    python migrate_to_postgres.py check
+
+Only if the check confirms that no VulnTrace tables exist in the target, run:
+
+    python migrate_to_postgres.py migrate
+
+The migration creates the PostgreSQL schema and copies all six VulnTrace tables
+in one transaction, preserving IDs, foreign-key relationships, and password
+hashes. It opens the SQLite source in read-only mode, verifies copied row
+counts, and refuses to proceed if the target already contains VulnTrace tables
+or the source schema contains unrecognized data. Keep the SQLite database as a
+rollback copy.
 
 ## Ollama Setup
 
@@ -228,6 +256,11 @@ Start the Flask application:
 
     python app.py
 
+When using Neon, initialize it with the migration command above before starting
+the application. The app does not run PostgreSQL DDL automatically at startup.
+Without `NEON_DATABASE_URL`, the existing SQLite startup/schema compatibility
+path is used.
+
 Then open the application in a browser:
 
     http://127.0.0.1:5000
@@ -238,7 +271,8 @@ Before a demonstration, missing AI analyses can be generated using:
 
     python pre_cache_ai.py
 
-Already cached findings are skipped.
+Already cached findings are skipped. The script uses whichever backend the app
+is configured to use.
 
 ## Demonstration Flow
 

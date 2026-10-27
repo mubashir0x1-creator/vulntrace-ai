@@ -9,7 +9,6 @@
 from pathlib import Path
 import json
 import os
-import sqlite3
 from functools import wraps
 
 from flask import (
@@ -25,6 +24,7 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
+from db import DATABASE, INTEGRITY_ERRORS, get_db, using_postgres
 from services.parser import parse_report
 from services.analyzer import analyze_findings
 from services.ai_analyzer import analyze_finding
@@ -36,40 +36,23 @@ from services.ai_analyzer import analyze_finding
 
 app = Flask(__name__)
 
-app.config["SECRET_KEY"] = os.environ.get(
-    "VULNTRACE_SECRET_KEY"
+app.config["SECRET_KEY"] = (
+    os.environ.get("VULNTRACE_SECRET_KEY")
+    or os.environ.get("SESSION_SECRET")
 )
 
 if not app.config["SECRET_KEY"]:
     raise RuntimeError(
-        "VULNTRACE_SECRET_KEY environment variable is not set."
+        "Set VULNTRACE_SECRET_KEY or SESSION_SECRET."
     )
 
 app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
 
 BASE_DIR = Path(__file__).resolve().parent
 
-DATABASE = BASE_DIR / "database" / "vulntrace.db"
-
 DEMO_REPORT = BASE_DIR / "sample_reports" / "demo_report.json"
 
 ALLOWED_EXTENSIONS = {"json"}
-
-
-# =========================================================
-# DATABASE
-# =========================================================
-
-def get_db():
-    """Open the SQLite database."""
-
-    connection = sqlite3.connect(DATABASE)
-
-    connection.row_factory = sqlite3.Row
-
-    connection.execute("PRAGMA foreign_keys = ON")
-
-    return connection
 
 
 def ensure_database_schema():
@@ -78,7 +61,18 @@ def ensure_database_schema():
     database already exists.
     """
 
+    if using_postgres():
+        raise RuntimeError(
+            "PostgreSQL schema setup is explicit; use migrate_to_postgres.py."
+        )
+
+    first_run = not DATABASE.exists()
     db = get_db()
+
+    if first_run:
+        db.executescript(
+            (BASE_DIR / "database" / "schema.sql").read_text(encoding="utf-8")
+        )
 
     columns = {
         row["name"]
@@ -272,7 +266,7 @@ def save_report(
     in their duplicate group.
     """
 
-    cursor = db.execute(
+    report_id = db.insert_id(
         """
         INSERT INTO reports
             (user_id, name, source_format)
@@ -284,8 +278,6 @@ def save_report(
             source_format,
         ),
     )
-
-    report_id = cursor.lastrowid
 
     first_finding_by_key = {}
 
@@ -301,7 +293,7 @@ def save_report(
             duplicate_key
         )
 
-        cursor = db.execute(
+        finding_id = db.insert_id(
             """
             INSERT INTO findings
             (
@@ -337,8 +329,6 @@ def save_report(
                 1,
             ),
         )
-
-        finding_id = cursor.lastrowid
 
         if duplicate_of is None:
 
@@ -468,7 +458,7 @@ def register():
 
         try:
 
-            cursor = db.execute(
+            user_id = db.insert_id(
                 """
                 INSERT INTO users
                     (username, password_hash)
@@ -482,7 +472,7 @@ def register():
 
             db.commit()
 
-        except sqlite3.IntegrityError:
+        except INTEGRITY_ERRORS:
 
             db.close()
 
@@ -493,8 +483,6 @@ def register():
             return render_template(
                 "register.html"
             )
-
-        user_id = cursor.lastrowid
 
         db.close()
 
@@ -1261,7 +1249,7 @@ def view_finding(finding_id):
     """
     Display one security finding with local AI analysis.
 
-    Finding-level AI analysis is cached in SQLite.
+    Finding-level AI analysis is cached in the configured database.
     """
 
     db = get_db()
@@ -1616,12 +1604,11 @@ def resolve_verification(
 # DATABASE INITIALIZATION
 # =========================================================
 
-ensure_database_schema()
-
-
 # =========================================================
 # RUN
 # =========================================================
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    if not using_postgres():
+        ensure_database_schema()
+    app.run(host="0.0.0.0", port=5000, debug=False)

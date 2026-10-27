@@ -1,15 +1,11 @@
 import json
-import sqlite3
 
+from db import get_db
 from services.ai_analyzer import analyze_finding
 
 
-DATABASE = "database/vulntrace.db"
-
-
 def main():
-    db = sqlite3.connect(DATABASE)
-    db.row_factory = sqlite3.Row
+    db = get_db()
 
     findings = db.execute(
         """
